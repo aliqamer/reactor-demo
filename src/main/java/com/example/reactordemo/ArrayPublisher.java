@@ -15,12 +15,13 @@ public class ArrayPublisher<T> implements Flow.Publisher<T> {
         subscriber.onSubscribe(new Flow.Subscription() {
             int index;
             long requested;
+            boolean cancelled = false;
+
             @Override
             public void request(long n) {
 //                System.out.println("requesting "+n+" elements");
 
                 long initialRequested = requested;
-
                 requested += n;
 
                 //if we are already iterating
@@ -31,6 +32,11 @@ public class ArrayPublisher<T> implements Flow.Publisher<T> {
                 int sent = 0;
 
                 for (; sent < requested && index < array.length; sent++, index++) {
+
+                    if(cancelled) {
+                        return;
+                    }
+
                     T element = array[index];
 
                     if(element == null) {
@@ -48,7 +54,7 @@ public class ArrayPublisher<T> implements Flow.Publisher<T> {
 
             @Override
             public void cancel() {
-
+                cancelled = true;
             }
         });
 
