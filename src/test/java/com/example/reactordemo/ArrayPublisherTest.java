@@ -139,6 +139,47 @@ public class ArrayPublisherTest {
         Assertions.assertThat(error.get()).isInstanceOf(NullPointerException.class);
     }
 
+    @Test
+    public void shouldNotDieInStackOverflow() throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(1);
+        ArrayList<Long> collected = new ArrayList<>();
+        long toRequest = 1000L;
+        Long[] array = generate(toRequest);
+        ArrayPublisher<Long> publisher = new ArrayPublisher<>(array);
+
+        publisher.subscribe(new Flow.Subscriber<Long>() {
+            Flow.Subscription s;
+
+            @Override
+            public void onSubscribe(Flow.Subscription subscription) {
+                this.s = subscription;
+                s.request(1);
+            }
+
+            @Override
+            public void onNext(Long item) {
+                collected.add(item);
+
+                s.request(1);
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+
+            }
+
+            @Override
+            public void onComplete() {
+
+            }
+        });
+
+        latch.await(5, TimeUnit.SECONDS);
+
+        Assertions.assertThat(collected).containsExactly(array);
+    }
+
+
     static Long[] generate(long num) {
         return LongStream.range(0, num >= Integer.MAX_VALUE ? 1000000 : num)
                 .boxed()

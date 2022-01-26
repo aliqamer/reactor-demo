@@ -14,11 +14,23 @@ public class ArrayPublisher<T> implements Flow.Publisher<T> {
     public void subscribe(Flow.Subscriber<? super T> subscriber) {
         subscriber.onSubscribe(new Flow.Subscription() {
             int index;
-
+            long requested;
             @Override
             public void request(long n) {
-                System.out.println("requesting "+n+" elements");
-                for (int i = 0; i < n && index < array.length; i++, index++) {
+//                System.out.println("requesting "+n+" elements");
+
+                long initialRequested = requested;
+
+                requested += n;
+
+                //if we are already iterating
+                if(initialRequested != 0) {
+                    return;
+                }
+
+                int sent = 0;
+
+                for (; sent < requested && index < array.length; sent++, index++) {
                     T element = array[index];
 
                     if(element == null) {
@@ -30,6 +42,8 @@ public class ArrayPublisher<T> implements Flow.Publisher<T> {
                 if(index == array.length) {
                     subscriber.onComplete();
                 }
+
+                requested -= sent;
             }
 
             @Override
