@@ -81,6 +81,7 @@ public class ArrayPublisherTest {
 
             @Override
             public void onComplete() {
+                System.out.println("onComplete()");
                 latch.countDown();
             }
         });
