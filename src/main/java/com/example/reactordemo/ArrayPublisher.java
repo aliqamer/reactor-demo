@@ -1,8 +1,10 @@
 package com.example.reactordemo;
 
-import java.util.concurrent.Flow;
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 
-public class ArrayPublisher<T> implements Flow.Publisher<T> {
+public class ArrayPublisher<T> implements Publisher<T> {
 
     private final T[] array;
 
@@ -11,8 +13,8 @@ public class ArrayPublisher<T> implements Flow.Publisher<T> {
     }
 
     @Override
-    public void subscribe(Flow.Subscriber<? super T> subscriber) {
-        subscriber.onSubscribe(new Flow.Subscription() {
+    public void subscribe(Subscriber<? super T> subscriber) {
+        subscriber.onSubscribe(new Subscription() {
             int index;
             long requested;
             boolean cancelled = false;

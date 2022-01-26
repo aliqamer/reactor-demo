@@ -1,7 +1,13 @@
 package com.example.reactordemo;
 
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.Test;
+//import org.junit.jupiter.api.Test;
+import org.junit.Test;
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
+import org.reactivestreams.tck.PublisherVerification;
+import org.reactivestreams.tck.TestEnvironment;
 
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -10,7 +16,21 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.LongStream;
 
-public class ArrayPublisherTest {
+public class ArrayPublisherTest extends PublisherVerification<Long> {
+
+    public ArrayPublisherTest() {
+        super(new TestEnvironment());
+    }
+
+    @Override
+    public Publisher<Long> createPublisher(long elements) {
+        return new ArrayPublisher<>(generate(elements));
+    }
+
+    @Override
+    public Publisher<Long> createFailedPublisher() {
+        return null;
+    }
 
     @Test
     public void everyMethodInSubscriberShouldBeExecutedInParticularOrder() throws InterruptedException {
@@ -18,9 +38,9 @@ public class ArrayPublisherTest {
         ArrayList<String> observedSignals = new ArrayList<>();
         ArrayPublisher<Long> arrayPublisher = new ArrayPublisher<>(generate(5));
 
-        arrayPublisher.subscribe(new Flow.Subscriber<>() {
+        arrayPublisher.subscribe(new Subscriber<Long>() {
             @Override
-            public void onSubscribe(Flow.Subscription subscription) {
+            public void onSubscribe(Subscription subscription) {
                 observedSignals.add("onSubscribe()");
                 subscription.request(10);
             }
@@ -63,11 +83,11 @@ public class ArrayPublisherTest {
         long toRequest = 5;
         Long[] array = generate(toRequest);
         ArrayPublisher<Long> publisher = new ArrayPublisher<>(array);
-        Flow.Subscription[] subscriptions = new Flow.Subscription[1];
+        Subscription[] subscriptions = new Subscription[1];
 
-        publisher.subscribe(new Flow.Subscriber<>() {
+        publisher.subscribe(new Subscriber<>() {
             @Override
-            public void onSubscribe(Flow.Subscription subscription) {
+            public void onSubscribe(Subscription subscription) {
                 subscriptions[0] = subscription;
             }
 
@@ -112,9 +132,9 @@ public class ArrayPublisherTest {
         AtomicReference<Throwable> error = new AtomicReference<>();
         ArrayPublisher<Long> publisher = new ArrayPublisher<>(array);
 
-        publisher.subscribe(new Flow.Subscriber<>() {
+        publisher.subscribe(new Subscriber<>() {
             @Override
-            public void onSubscribe(Flow.Subscription subscription) {
+            public void onSubscribe(Subscription subscription) {
                 subscription.request(5);
             }
 
@@ -147,11 +167,11 @@ public class ArrayPublisherTest {
         Long[] array = generate(toRequest);
         ArrayPublisher<Long> publisher = new ArrayPublisher<>(array);
 
-        publisher.subscribe(new Flow.Subscriber<Long>() {
-            Flow.Subscription s;
+        publisher.subscribe(new Subscriber<Long>() {
+            Subscription s;
 
             @Override
-            public void onSubscribe(Flow.Subscription subscription) {
+            public void onSubscribe(Subscription subscription) {
                 this.s = subscription;
                 s.request(1);
             }
@@ -187,9 +207,9 @@ public class ArrayPublisherTest {
         Long[] array = generate(toRequest);
         ArrayPublisher<Long> publisher = new ArrayPublisher<>(array);
 
-        publisher.subscribe(new Flow.Subscriber<Long>() {
+        publisher.subscribe(new Subscriber<Long>() {
             @Override
-            public void onSubscribe(Flow.Subscription subscription) {
+            public void onSubscribe(Subscription subscription) {
                 subscription.cancel();
                 subscription.request(toRequest);
             }
