@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Flow;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.LongStream;
 
 public class ArrayPublisherTest {
@@ -102,6 +103,40 @@ public class ArrayPublisherTest {
         Assertions.assertThat(latch.await(1, TimeUnit.SECONDS)).isTrue();
 
         Assertions.assertThat(collected).containsExactly(array);
+    }
+
+    @Test
+    public void mustSendNPENormally() throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(1);
+        Long[] array = new Long[] { null };
+        AtomicReference<Throwable> error = new AtomicReference<>();
+        ArrayPublisher<Long> publisher = new ArrayPublisher<>(array);
+
+        publisher.subscribe(new Flow.Subscriber<>() {
+            @Override
+            public void onSubscribe(Flow.Subscription subscription) {
+                subscription.request(5);
+            }
+
+            @Override
+            public void onNext(Long item) {
+
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+                error.set(throwable);
+                latch.countDown();
+            }
+
+            @Override
+            public void onComplete() {
+
+            }
+        });
+
+        latch.await(1, TimeUnit.SECONDS);
+        Assertions.assertThat(error.get()).isInstanceOf(NullPointerException.class);
     }
 
     static Long[] generate(long num) {
